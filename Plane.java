@@ -167,21 +167,6 @@ public class Plane {
         //recherche de la position de chaque élément
         //on teste toutes les positions possibles pour chaque élément jusqu'à trouver une solution valide
 
-        for (PlaneElement e : plane.elements) {
-            int pos = 0;
-            boolean found = false;
-            while (!found) {
-                e.setPos(pos);
-                if (plane.DistisDiff()) {
-                    found = true;
-                } else {
-                    pos++;
-                }
-            }
-        }
-
-
-
     }
 
 }
