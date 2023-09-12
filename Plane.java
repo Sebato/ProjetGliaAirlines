@@ -97,11 +97,15 @@ public class Plane {
         //on va calculer le nombre de blocs de sièges entre chaque couple de séparateurs
         //et vérifier que ces distances sont toutes différentes
 
+        //cas de base : si un seul séparateur, on retourne true
+        if (this.n == 1) return true;
+
+
         ArrayList<Divider> dividers = new ArrayList<Divider>();
         List<Integer> distances = new ArrayList<Integer>();
 
         for (PlaneElement e : this.elements) {
-            if (e.getType() == elemType.DIVIDER) dividers.add((Divider) e);
+            if (e.getType() == elemType.DIVIDER && e.getPos() != -1) dividers.add((Divider) e);
         }
         for (Divider d1 : dividers) {
             for (Divider d2 : dividers) {
@@ -151,6 +155,13 @@ public class Plane {
 
     public static void dividers(int n, int m, int exits) {
 
+        //impossible si plus de séparateurs que de blocs de sièges
+        //impssible si somme des séparateurs et des sorties de secours supérieure au nombre de blocs de sièges
+        if (n > m || n + exits > m) {
+            System.out.println("Combinaison ipossible");
+            return;
+        }
+
         //initialisation de l'avion
         Plane plane = new Plane(n, m, exits);
 
@@ -167,6 +178,25 @@ public class Plane {
         //recherche de la position de chaque élément
         //on teste toutes les positions possibles pour chaque élément jusqu'à trouver une solution valide
 
-    }
+//        boolean found = false;
+//        boolean placed = false;
+//        for (int i = 0; i < plane.elements.size(); i++) {
+//            PlaneElement e = plane.elements.get(i);
+//            int pos = 0;
+//            placed = false;
+//            while (!placed) {
+//                e.setPos(pos);
+//                if (plane.firstClassIsTwoBlocks() && plane.exitsAreNotDividers() && plane.DistisDiff()) {
+//                    placed = true;
+//                }
+//                else {
+//                    pos++;
+//                    if (pos > plane.m) {
+//                        System.out.println("Combinaison impossible");
+//                        return;
+//                    }
+//                }
+//            }
+        }
 
 }
