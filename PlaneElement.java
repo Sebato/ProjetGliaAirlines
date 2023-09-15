@@ -16,6 +16,10 @@ public abstract class PlaneElement {
         return pos;
     }
 
+    public void setPos(int pos) {
+        this.pos = pos;
+    }
+
     public elemType getType() {
         return type;
     }
