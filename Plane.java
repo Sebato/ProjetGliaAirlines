@@ -7,7 +7,7 @@ public class Plane {
 
     // n = nombre de séparateurs
     // m = nombre de blocs de sièges
-    // nbexits = nombre de sorties de secours
+    // exits = tableau des positions des sorties de secours
 
         //Contraintes :
     //Il est impératif de ne pas installer de séparateurs au niveau des sorties de secours (au moins une sortie)
@@ -19,13 +19,13 @@ public class Plane {
     //les séparateurs seront insérés dans le tableau et représentés par des * (étoiles)
     //les sorties de secours seront insérés dans le tableau et représentées par des # (dièses)
 
-    //Exemple : n = 3, m = 5, nbexits = 1
+    //Exemple : n = 3, m = 5, exits = 1
     //avant division :
     // 0 1 2 3 4 5
     //après division :
     // 0 1 * 2 # 3 * 4 5
 
-    //Exemple Exo : n = 5, m = 11, nbexits = 1
+    //Exemple Exo : n = 5, m = 11, exits = 1
     //avant division :
     // 0 1 2 3 4 5 6 7 8 9 10 11
     //après division :
@@ -33,14 +33,22 @@ public class Plane {
 
     private final int n;
     private final int m;
-    private final int nbExits;
+    private final int[] exits;
     private final ArrayList<Character> planeTxt;
     private final ArrayList<PlaneElement> elements;
 
-    public Plane(int n, int m, int nbexits){
+    public Plane(int n, int m, int[] exits){
         this.n = n;
         this.m = m;
-        this.nbExits = nbexits;
+        this.exits = exits;
+        this.planeTxt = new ArrayList<Character>();
+        this.elements = new ArrayList<PlaneElement>();
+    }
+
+    public Plane(Instance I){
+        this.n = I.nb_dividers;
+        this.m = I.capacity;
+        this.exits = I.exits;
         this.planeTxt = new ArrayList<Character>();
         this.elements = new ArrayList<PlaneElement>();
     }
@@ -52,8 +60,8 @@ public class Plane {
     public int getM() {
         return m;
     }
-    public int getNbExits() {
-        return nbExits;
+    public int[] getExits() {
+        return exits;
     }
     public ArrayList<Character> getPlaneTxt() {
         return planeTxt;
@@ -76,7 +84,7 @@ public class Plane {
         return null;
     }
     public Exit getExitByNum(int num) {
-        if (num > this.nbExits || num < 0) return null;
+        if (num > this.exits.length || num < 0) return null;
         for (PlaneElement e : this.elements) {
             if (e.getType() == elemType.EXIT && e.getNum() == num) return (Exit) e;
         }
@@ -97,15 +105,11 @@ public class Plane {
         //on va calculer le nombre de blocs de sièges entre chaque couple de séparateurs
         //et vérifier que ces distances sont toutes différentes
 
-        //cas de base : si un seul séparateur, on retourne true
-        if (this.n == 1) return true;
-
-
         ArrayList<Divider> dividers = new ArrayList<Divider>();
         List<Integer> distances = new ArrayList<Integer>();
 
         for (PlaneElement e : this.elements) {
-            if (e.getType() == elemType.DIVIDER && e.getPos() != -1) dividers.add((Divider) e);
+            if (e.getType() == elemType.DIVIDER) dividers.add((Divider) e);
         }
         for (Divider d1 : dividers) {
             for (Divider d2 : dividers) {
@@ -135,68 +139,80 @@ public class Plane {
         return true;
     }
 
-    public boolean exitsAreNotDividers() {
-        //on vérifie que les sorties de secours ne sont pas placées au niveau des séparateurs
+    public boolean atLeastOneExitFree(){
+        //on vérifie qu'au moins une sortie de secours est libre
 
         for (PlaneElement e : this.elements) {
             if (e.getType() == elemType.EXIT) {
-                for (int i = 0; i < this.n; i++) {
-                    Divider d = getDividerByNum(i);
-                    if (d != null) {
-                        if (d.getPos() == e.getPos()) return false;
-                    }
-                }
+                Exit exit = (Exit) e;
+                if ( exit.isFree() ) return true;
             }
+        }
+        return false;
+    }
+
+    public boolean allDivsPlaced(){
+        //on vérifie que tous les séparateurs ont été placés
+
+        for (int i = 0; i < this.n; i++) {
+            Divider d = getDividerByNum(i);
+            if (d.getPos() == -1 ) return false;
         }
         return true;
     }
 
     //RUN
 
-    public static void dividers(int n, int m, int exits) {
-
-        //impossible si plus de séparateurs que de blocs de sièges
-        //impssible si somme des séparateurs et des sorties de secours supérieure au nombre de blocs de sièges
-        if (n > m || n + exits > m) {
-            System.out.println("Combinaison ipossible");
-            return;
-        }
+    public static void dividers(int n, int m, int[] exits) {
 
         //initialisation de l'avion
         Plane plane = new Plane(n, m, exits);
+        ArrayList<Divider> dividers = new ArrayList<Divider>();
+
+        //nombre de possibilités de positionnement des séparateurs
+        //a verifier
+        int nbPossibilities = (int) Math.pow(m, n);
 
         //initialisation des éléments
 
-        for (int i = 0; i < n; i++) {
-            plane.elements.add(new Divider(i, -1));
+        for (int i = 0; i < exits.length; i++) {
+            plane.elements.add(new Exit(i, exits[i]));
         }
 
-        for (int i = 0; i < exits; i++) {
-            plane.elements.add(new Exit(i, -1));
+        for (int i = 0; i < n; i++) {
+            plane.elements.add(new Divider(i, -1));
+            dividers.add(plane.getDividerByNum(i));
         }
 
         //recherche de la position de chaque élément
         //on teste toutes les positions possibles pour chaque élément jusqu'à trouver une solution valide
 
-//        boolean found = false;
-//        boolean placed = false;
-//        for (int i = 0; i < plane.elements.size(); i++) {
-//            PlaneElement e = plane.elements.get(i);
-//            int pos = 0;
-//            placed = false;
-//            while (!placed) {
-//                e.setPos(pos);
-//                if (plane.firstClassIsTwoBlocks() && plane.exitsAreNotDividers() && plane.DistisDiff()) {
-//                    placed = true;
-//                }
-//                else {
-//                    pos++;
-//                    if (pos > plane.m) {
-//                        System.out.println("Combinaison impossible");
-//                        return;
-//                    }
-//                }
-//            }
+        while( nbPossibilities > 0 ) {
+            for (Divider d : dividers){
+                if (d.getPos() == -1) {
+                    d.setPos(0);
+                    while (d.getPos() < m) {
+                        if (plane.allDivsPlaced()) {
+                            if (plane.DistisDiff() && plane.firstClassIsTwoBlocks() && plane.atLeastOneExitFree()) {
+                                System.out.println("Solution trouvée :");
+                                System.out.println(plane.toString());
+                                return;
+                            }
+                        }
+                        d.setPos(d.getPos() + 1);
+                    }
+                    d.setPos(-1);
+                    break;
+                }
+
+            }
+            nbPossibilities--;
         }
+    }
+
+    public static void main(String[] args) {
+        int[] exits = {3};
+        dividers(5, 11, exits);
+    }
 
 }
