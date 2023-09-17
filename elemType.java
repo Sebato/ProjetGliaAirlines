@@ -1,3 +1,3 @@
 public enum elemType {
-    EXIT, DIVIDER, BLOCK
+    EXIT, DIVIDER
 }
